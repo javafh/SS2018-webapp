@@ -1,5 +1,7 @@
 package de.hsflensburg.java.gwt.server;
 
+import java.lang.reflect.Method;
+
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import de.hsflensburg.java.gwt.shared.WebAppService;
@@ -13,24 +15,6 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 	private static final long serialVersionUID = 1L;
 
 	/***************************************
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String send(String sText)
-	{
-		String sUserAgent = getThreadLocalRequest().getHeader("User-Agent");
-		String sServerInfo = getServletContext().getServerInfo();
-
-		// Escape data from the client to prevent cross-site scripting
-		sText = escapeHtml(sText);
-		sUserAgent = escapeHtml(sUserAgent);
-
-		return String.format(
-			"<b>Your Text</b>: %s<br><b>User Agent</b>: %s<br><b>Server</b>: %s",
-			sText, sUserAgent, sServerInfo);
-	}
-
-	/***************************************
 	 * Escape an HTML string. Escaping data received from the client helps to
 	 * prevent cross-site script vulnerabilities.
 	 *
@@ -38,7 +22,7 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 	 *
 	 * @return the escaped string
 	 */
-	private String escapeHtml(String sHtml)
+	public static String escapeHtml(String sHtml)
 	{
 		if (sHtml != null)
 		{
@@ -47,5 +31,33 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 		}
 
 		return sHtml;
+	}
+
+	/***************************************
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String executeCommand(String sCommand, String sData) throws Exception
+	{
+		String sMethod = "handle" + sCommand;
+		Method rHandler = getClass().getMethod(sMethod, String.class);
+
+		if (rHandler == null)
+		{
+			throw new IllegalArgumentException(
+				"Missing command handling method " + sMethod);
+		}
+
+		Object aResult = rHandler.invoke(this, sData);
+
+		return aResult != null ? aResult.toString() : null;
+	}
+
+	/***************************************
+	 * Handles the command {@link WebAppService#COMMAND_GET_INITIAL_DATA}.
+	 */
+	public String handleGetInitialData(String sIgnored)
+	{
+		return "This is the initial data";
 	}
 }

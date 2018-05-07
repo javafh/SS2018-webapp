@@ -7,6 +7,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  */
 public interface WebAppServiceAsync
 {
-	void send(String sText, AsyncCallback<String> rCallback)
-		throws IllegalArgumentException;
+
+	void executeCommand(String sCommand, String sData,
+		AsyncCallback<String> callback);
 }

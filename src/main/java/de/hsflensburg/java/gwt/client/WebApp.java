@@ -2,16 +2,10 @@ package de.hsflensburg.java.gwt.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DialogBox;
-import com.google.gwt.user.client.ui.FocusWidget;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 import de.hsflensburg.java.gwt.shared.WebAppService;
 import de.hsflensburg.java.gwt.shared.WebAppServiceAsync;
@@ -21,19 +15,12 @@ import de.hsflensburg.java.gwt.shared.WebAppServiceAsync;
  */
 public class WebApp implements EntryPoint
 {
-	// The message displayed to the user when the server cannot be reached or
-	// returns an error.
-	private static final String SERVER_ERROR = "An error occurred while "
-		+ "attempting to contact the server. Please check your network "
-		+ "connection and try again.";
-
 	// The web application service
 	private final WebAppServiceAsync aWebAppService = GWT.create(
 		WebAppService.class);
 
-	private TextBox	aRequestField	= new TextBox();
-	private Label	aErrorLabel		= new Label();
-	private Button	aSendButton		= new Button("Send");
+	private Label	aDataLabel	= new Label();
+	private Label	aErrorLabel	= new Label();
 
 	/***************************************
 	 * The entry point method that will be invoked when the application is
@@ -42,123 +29,39 @@ public class WebApp implements EntryPoint
 	@Override
 	public void onModuleLoad()
 	{
-		aRequestField.getElement().setPropertyString("placeholder", "Request");
-		aSendButton.addStyleName("sendButton");
+		FlowPanel aMainPanel = new FlowPanel();
 
-		RootPanel.get("nameFieldContainer").add(aRequestField);
-		RootPanel.get("sendButtonContainer").add(aSendButton);
-		RootPanel.get("errorLabelContainer").add(aErrorLabel);
+		aErrorLabel.addStyleName("error");
 
-		// Focus the cursor on the name field when the app loads
-		aRequestField.setFocus(true);
-		aRequestField.selectAll();
+		aMainPanel.add(new Label("Data:"));
+		aMainPanel.add(aErrorLabel);
+		aMainPanel.add(aDataLabel);
 
-		aSendButton.addClickHandler(e -> sendTextToServer());
-		aRequestField.addKeyUpHandler(e -> {
-			if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER)
-			{
-				sendTextToServer();
-			}
-		});
+		RootPanel.get("webapp-ui").add(aMainPanel);
+
+		aWebAppService.executeCommand(WebAppService.COMMAND_GET_INITIAL_DATA,
+			null, new InitialDataHandler());
 	}
 
-	/***************************************
-	 * Send the input from the text to the server and wait for a response.
-	 */
-	private void sendTextToServer()
+	private void handleServerError(Throwable rCaught)
 	{
-		String sTextToServer = aRequestField.getText();
-
-		if (sTextToServer.length() >= 4)
-		{
-			ResponseDialogBox aDialog = new ResponseDialogBox(aSendButton,
-				sTextToServer);
-
-			aErrorLabel.setText("");
-			aSendButton.setEnabled(false);
-
-			aWebAppService.send(sTextToServer, new AsyncCallback<String>()
-			{
-				@Override
-				public void onFailure(Throwable caught)
-				{
-					aDialog.display("Remote Procedure Call - Failure",
-						SERVER_ERROR, true);
-				}
-
-				@Override
-				public void onSuccess(String sResponse)
-				{
-					aDialog.display("Remote Procedure Call", sResponse, false);
-				}
-			});
-		}
-		else
-		{
-			aErrorLabel.setText("Please enter at least four characters");
-		}
-
+		aErrorLabel.setText("ERROR: " + rCaught.getMessage());
 	}
 
-	static class ResponseDialogBox extends DialogBox
+	private class InitialDataHandler implements AsyncCallback<String>
 	{
-		private static final String ERROR_RESPONSE_STYLE = "errorResponse";
 
-		VerticalPanel	aDialogPanel	= new VerticalPanel();
-		Label			aRequestLabel	= new Label();
-		HTML			aResponseLabel	= new HTML();
-		Button			aCloseButton	= new Button("Close");
-
-		ResponseDialogBox(FocusWidget rEnableWidget, String sRequest)
+		@Override
+		public void onFailure(Throwable rCaught)
 		{
-			setAnimationEnabled(true);
+			handleServerError(rCaught);
 
-			aRequestLabel.setText(sRequest);
-
-			aCloseButton.getElement().setId("closeButton");
-			aCloseButton.addClickHandler(e -> {
-				hide();
-				rEnableWidget.setEnabled(true);
-				rEnableWidget.setFocus(true);
-			});
-
-			aDialogPanel.addStyleName("dialogPanel");
-			aDialogPanel.setHorizontalAlignment(VerticalPanel.ALIGN_RIGHT);
-
-			aDialogPanel.add(new HTML("<b>Sending request to the server:</b>"));
-			aDialogPanel.add(aRequestLabel);
-			aDialogPanel.add(new HTML("<br><b>Server replies:</b>"));
-			aDialogPanel.add(aResponseLabel);
-			aDialogPanel.add(aCloseButton);
-
-			setWidget(aDialogPanel);
 		}
 
-		/***************************************
-		 * Display the dialog with the given message.
-		 *
-		 * @param sTitle The dialog title
-		 * @param sMessage The response text to display
-		 * @param bError TRUE if an error occurred
-		 */
-		void display(String sTitle, String sMessage, boolean bError)
+		@Override
+		public void onSuccess(String sResponse)
 		{
-			setText(sTitle);
-			aResponseLabel.setHTML(sMessage);
-
-			if (bError)
-			{
-				aResponseLabel.addStyleName(ERROR_RESPONSE_STYLE);
-			}
-			else
-			{
-				aResponseLabel.removeStyleName(ERROR_RESPONSE_STYLE);
-			}
-
-			center();
-			aCloseButton.setFocus(true);
-
+			aDataLabel.setText(sResponse);
 		}
 	}
-
 }
