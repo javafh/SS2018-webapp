@@ -1,11 +1,17 @@
 package de.hsflensburg.java.gwt.client;
 
+import java.util.function.Consumer;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextArea;
 
 import de.hsflensburg.java.gwt.shared.WebAppService;
 import de.hsflensburg.java.gwt.shared.WebAppServiceAsync;
@@ -19,8 +25,8 @@ public class WebApp implements EntryPoint
 	private final WebAppServiceAsync aWebAppService = GWT.create(
 		WebAppService.class);
 
-	private Label	aDataLabel	= new Label();
-	private Label	aErrorLabel	= new Label();
+	private TextArea	aResponseData	= new TextArea();
+	private Label		aErrorLabel		= new Label();
 
 	/***************************************
 	 * The entry point method that will be invoked when the application is
@@ -32,15 +38,34 @@ public class WebApp implements EntryPoint
 		FlowPanel aMainPanel = new FlowPanel();
 
 		aErrorLabel.addStyleName("error");
+		aResponseData.setReadOnly(true);
 
 		aMainPanel.add(new Label("Data:"));
 		aMainPanel.add(aErrorLabel);
-		aMainPanel.add(aDataLabel);
+		aMainPanel.add(aResponseData);
+
+		aMainPanel.getElement().getStyle().setProperty("display", "grid");
 
 		RootPanel.get("webapp-ui").add(aMainPanel);
 
 		aWebAppService.executeCommand(WebAppService.COMMAND_GET_INITIAL_DATA,
-			null, new InitialDataHandler());
+			null, new CommandCallback(this::displayBlockNumber));
+	}
+
+	private void displayBlockNumber(String sResult)
+	{
+		JSONValue aJsonResult = JSONParser.parseStrict(sResult);
+
+		if (aJsonResult instanceof JSONString)
+		{
+			String sValue = ((JSONString) aJsonResult).stringValue();
+
+			if (sValue.startsWith("0x"))
+			{
+				aResponseData.setText("Current Ethereum block: "
+					+ Integer.valueOf(sValue.substring(2), 16).toString());
+			}
+		}
 	}
 
 	private void handleServerError(Throwable rCaught)
@@ -48,8 +73,14 @@ public class WebApp implements EntryPoint
 		aErrorLabel.setText("ERROR: " + rCaught.getMessage());
 	}
 
-	private class InitialDataHandler implements AsyncCallback<String>
+	private class CommandCallback implements AsyncCallback<String>
 	{
+		private Consumer<String> fSuccessHandler;
+
+		public CommandCallback(Consumer<String> rSuccessHandler)
+		{
+			fSuccessHandler = rSuccessHandler;
+		}
 
 		@Override
 		public void onFailure(Throwable rCaught)
@@ -59,9 +90,9 @@ public class WebApp implements EntryPoint
 		}
 
 		@Override
-		public void onSuccess(String sResponse)
+		public void onSuccess(String sResult)
 		{
-			aDataLabel.setText(sResponse);
+			fSuccessHandler.accept(sResult);
 		}
 	}
 }
