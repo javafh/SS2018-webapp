@@ -1,9 +1,14 @@
 package de.hsflensburg.java.gwt.server;
 
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import de.hsflensburg.java.gwt.shared.ServiceException;
 import de.hsflensburg.java.gwt.shared.WebAppService;
 
 /***************************************
@@ -58,6 +63,27 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 	 */
 	public String handleGetInitialData(String sIgnored)
 	{
-		return "This is the initial data";
+		URL aUrl;
+		try
+		{
+			aUrl = new URL("https://mainnet.infura.io/");
+
+			URLConnection rConnection = aUrl.openConnection();
+
+			if (rConnection instanceof HttpURLConnection)
+			{
+				HttpURLConnection rHttpConnection = (HttpURLConnection) rConnection;
+			}
+			else
+			{
+				throw new ServiceException("No HTTP connection for " + aUrl);
+			}
+
+			return "This is the initial data";
+		}
+		catch (Exception e)
+		{
+			throw new ServiceException(e);
+		}
 	}
 }
