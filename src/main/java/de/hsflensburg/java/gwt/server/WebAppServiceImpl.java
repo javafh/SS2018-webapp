@@ -1,5 +1,8 @@
 package de.hsflensburg.java.gwt.server;
 
+import de.esoco.lib.json.Json;
+import de.esoco.lib.json.JsonObject;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -102,23 +105,10 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 					}
 				}
 
-				String sData = aResponse.toString();
+				JsonObject aJsonResponse = Json.parseObject(
+					aResponse.toString());
 
-				int nResultIndex = sData.indexOf(JSON_RPC_RESULT_TOKEN);
-
-				if (nResultIndex >= 0)
-				{
-					sData = sData.substring(
-						nResultIndex + JSON_RPC_RESULT_TOKEN.length(),
-						sData.lastIndexOf('}')).trim();
-				}
-				else
-				{
-					throw new IllegalStateException(
-						"Could not parse as JSON RPC result: " + sData);
-				}
-
-				return sData;
+				return Json.toJson(aJsonResponse.get("result"));
 			}
 		}
 		catch (Exception e)
