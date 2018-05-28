@@ -1,5 +1,6 @@
 package de.hsflensburg.java.gwt.server;
 
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -73,6 +74,12 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 			if (rConnection instanceof HttpURLConnection)
 			{
 				HttpURLConnection rHttpConnection = (HttpURLConnection) rConnection;
+				
+				rHttpConnection.setDoOutput(true);
+				rHttpConnection.setRequestMethod("POST");
+				rHttpConnection.setRequestProperty("Content-Type", "application/json");
+				
+				OutputStream rOutput = rHttpConnection.getOutputStream();
 			}
 			else
 			{
