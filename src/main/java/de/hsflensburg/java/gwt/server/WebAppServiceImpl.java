@@ -5,8 +5,8 @@ import de.esoco.lib.json.JsonObject;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -72,7 +72,6 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 	{
 		try
 		{
-
 			URL aNodeUrl = new URL("https://mainnet.infura.io/");
 			HttpURLConnection aConnection = (HttpURLConnection) aNodeUrl.openConnection();
 
@@ -84,27 +83,28 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 			{
 
 				rOutput.write(
-					"{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"eth_blockNumber\",\"params\": []}".getBytes(
+					"{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\":\"eth_blockNumber\",\"params\": []}".getBytes(
 						StandardCharsets.US_ASCII));
 				rOutput.flush();
 			}
 
 			try (InputStream rInput = aConnection.getInputStream())
 			{
-				Reader aResponseReader = new InputStreamReader(rInput);
+				LineNumberReader aResponseReader = new LineNumberReader(
+					new InputStreamReader(rInput));
 				StringBuilder aResponse = new StringBuilder();
-				int nChar;
+				String sLine;
 
 				do
 				{
-					nChar = aResponseReader.read();
+					sLine = aResponseReader.readLine();
 
-					if (nChar >= 0)
+					if (sLine != null)
 					{
-						aResponse.append((char) nChar);
+						aResponse.append(sLine).append('\n');
 					}
 				}
-				while (nChar >= 0);
+				while (sLine != null);
 
 				JsonObject aJsonResponse = Json.parseObject(
 					aResponse.toString());
@@ -112,7 +112,9 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 				return Json.toJson(aJsonResponse.get("result"));
 			}
 		}
-		catch (Exception e)
+		catch (
+
+		Exception e)
 		{
 			e.printStackTrace();
 			return "ERROR: " + e;
