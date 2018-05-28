@@ -93,9 +93,9 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 			{
 				Reader aResponseReader = new InputStreamReader(rInput);
 				StringBuilder aResponse = new StringBuilder();
-				int nChar = 0;
+				int nChar;
 
-				while (nChar >= 0)
+				do
 				{
 					nChar = aResponseReader.read();
 
@@ -104,6 +104,7 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 						aResponse.append((char) nChar);
 					}
 				}
+				while (nChar >= 0);
 
 				JsonObject aJsonResponse = Json.parseObject(
 					aResponse.toString());
