@@ -1,11 +1,15 @@
 package de.hsflensburg.java.gwt.server;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
@@ -74,19 +78,49 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 			if (rConnection instanceof HttpURLConnection)
 			{
 				HttpURLConnection rHttpConnection = (HttpURLConnection) rConnection;
-				
+
 				rHttpConnection.setDoOutput(true);
 				rHttpConnection.setRequestMethod("POST");
-				rHttpConnection.setRequestProperty("Content-Type", "application/json");
-				
-				OutputStream rOutput = rHttpConnection.getOutputStream();
+				rHttpConnection.setRequestProperty("Content-Type",
+					"application/json");
+
+				String sRequest = "{\"jsonrpc\": \"2.0\", \"id\": 1, "
+					+ "\"method\": \"eth_blockNumber\",\"params\": []}";
+
+				try (OutputStream rOutput = rHttpConnection.getOutputStream())
+				{
+					rOutput.write(sRequest.getBytes(StandardCharsets.US_ASCII));
+				}
+
+				try (InputStream rInput = rHttpConnection.getInputStream())
+				{
+					LineNumberReader aResponseReader = new LineNumberReader(
+						new BufferedReader(new InputStreamReader(rInput)));
+					StringBuilder aResponse = new StringBuilder();
+					String sLine;
+
+					do
+					{
+						sLine = aResponseReader.readLine();
+
+						if (sLine != null)
+						{
+							aResponse.append(sLine);
+							aResponse.append('\n');
+						}
+
+					}
+					while (sLine != null);
+
+					return aResponse.toString();
+				}
+
 			}
 			else
 			{
 				throw new ServiceException("No HTTP connection for " + aUrl);
 			}
 
-			return "This is the initial data";
 		}
 		catch (Exception e)
 		{
