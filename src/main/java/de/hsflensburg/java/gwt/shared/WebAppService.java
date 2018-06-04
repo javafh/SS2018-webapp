@@ -11,7 +11,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 public interface WebAppService extends RemoteService
 {
 
-	public static final String COMMAND_GET_INITIAL_DATA = "GetInitialData";
+	public static final String COMMAND_GET_LATEST_BLOCK_NUMBER = "GetLatestBlockNumber";
 
 	/***************************************
 	 * Executes a command in the service.

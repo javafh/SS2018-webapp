@@ -3,7 +3,6 @@ package de.hsflensburg.java.gwt.server;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
@@ -64,9 +63,10 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 	}
 
 	/***************************************
-	 * Handles the command {@link WebAppService#COMMAND_GET_INITIAL_DATA}.
+	 * Handles the command
+	 * {@link WebAppService#COMMAND_GET_LATEST_BLOCK_NUMBER}.
 	 */
-	public String handleGetInitialData(String sIgnored)
+	public String handleGetLatestBlockNumber(String sIgnored)
 	{
 		URL aUrl;
 		try
@@ -94,8 +94,8 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 
 				try (InputStream rInput = rHttpConnection.getInputStream())
 				{
-					LineNumberReader aResponseReader = new LineNumberReader(
-						new BufferedReader(new InputStreamReader(rInput)));
+					BufferedReader aResponseReader = new BufferedReader(
+						new InputStreamReader(rInput));
 					StringBuilder aResponse = new StringBuilder();
 					String sLine;
 
