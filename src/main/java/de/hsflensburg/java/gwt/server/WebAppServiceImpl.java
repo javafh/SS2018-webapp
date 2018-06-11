@@ -1,14 +1,13 @@
 package de.hsflensburg.java.gwt.server;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import de.esoco.lib.comm.Endpoint;
+import de.esoco.lib.comm.EndpointFunction;
+import de.esoco.lib.comm.JsonRpcEndpoint;
+import de.esoco.lib.json.Json;
+import de.esoco.lib.json.JsonObject;
+
 import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
@@ -71,56 +70,15 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 		URL aUrl;
 		try
 		{
-			aUrl = new URL("https://mainnet.infura.io/");
+			Endpoint aNode = Endpoint.at("json-rpc:https://mainnet.infura.io/");
 
-			URLConnection rConnection = aUrl.openConnection();
+			EndpointFunction<?,
+				JsonObject> fGetBlockNumber = JsonRpcEndpoint.call(
+					"eth_blockNumber", JsonObject.class).on(aNode);
 
-			if (rConnection instanceof HttpURLConnection)
-			{
-				HttpURLConnection rHttpConnection = (HttpURLConnection) rConnection;
+			JsonObject aJsonResponse = fGetBlockNumber.receive();
 
-				rHttpConnection.setDoOutput(true);
-				rHttpConnection.setRequestMethod("POST");
-				rHttpConnection.setRequestProperty("Content-Type",
-					"application/json");
-
-				String sRequest = "{\"jsonrpc\": \"2.0\", \"id\": 1, "
-					+ "\"method\": \"eth_blockNumber\",\"params\": []}";
-
-				try (OutputStream rOutput = rHttpConnection.getOutputStream())
-				{
-					rOutput.write(sRequest.getBytes(StandardCharsets.US_ASCII));
-				}
-
-				try (InputStream rInput = rHttpConnection.getInputStream())
-				{
-					BufferedReader aResponseReader = new BufferedReader(
-						new InputStreamReader(rInput));
-					StringBuilder aResponse = new StringBuilder();
-					String sLine;
-
-					do
-					{
-						sLine = aResponseReader.readLine();
-
-						if (sLine != null)
-						{
-							aResponse.append(sLine);
-							aResponse.append('\n');
-						}
-
-					}
-					while (sLine != null);
-
-					return aResponse.toString();
-				}
-
-			}
-			else
-			{
-				throw new ServiceException("No HTTP connection for " + aUrl);
-			}
-
+			return Json.toJson(aJsonResponse.get("result"));
 		}
 		catch (Exception e)
 		{
