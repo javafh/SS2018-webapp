@@ -11,8 +11,6 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 public interface WebAppService extends RemoteService
 {
 
-	public static final String COMMAND_GET_LATEST_BLOCK_NUMBER = "GetLatestBlockNumber";
-
 	/***************************************
 	 * Executes a command in the service.
 	 *
@@ -24,6 +22,5 @@ public interface WebAppService extends RemoteService
 	 *
 	 * @throws ServiceException
 	 */
-	public String executeCommand(String sCommand, String sData)
-		throws Exception;
+	public String executeCommand(Command rCommand) throws Exception;
 }

@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
@@ -15,6 +16,8 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 import de.hsflensburg.java.gwt.shared.WebAppService;
 import de.hsflensburg.java.gwt.shared.WebAppServiceAsync;
+
+import static de.hsflensburg.java.gwt.shared.JsonRpcCommand.call;
 
 /***************************************
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -45,9 +48,22 @@ public class WebApp implements EntryPoint
 
 		RootPanel.get("webapp-ui").add(aMainPanel);
 
-		aWebAppService.executeCommand(
-			WebAppService.COMMAND_GET_LATEST_BLOCK_NUMBER, null,
+		updateBlockNumber();
+		Scheduler.get().scheduleFixedDelay(this::updateBlockNumber, 15000);
+	}
+
+	private void handleServerError(Throwable rCaught)
+	{
+		aErrorLabel.setText("ERROR: " + rCaught.getMessage());
+	}
+
+	private boolean updateBlockNumber()
+	{
+		aWebAppService.executeCommand(call("eth_blockNumber", null),
 			new CommandResultHandler(this::updateBlockNumber));
+
+		return true;
+
 	}
 
 	private void updateBlockNumber(String sResponse)
@@ -74,11 +90,6 @@ public class WebApp implements EntryPoint
 			aErrorLabel.setText("Unknown block number format: " + aJsonResult);
 		}
 
-	}
-
-	private void handleServerError(Throwable rCaught)
-	{
-		aErrorLabel.setText("ERROR: " + rCaught.getMessage());
 	}
 
 	private class CommandResultHandler implements AsyncCallback<String>

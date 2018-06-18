@@ -1,16 +1,15 @@
 package de.hsflensburg.java.gwt.server;
 
 import de.esoco.lib.comm.Endpoint;
-import de.esoco.lib.comm.EndpointFunction;
-import de.esoco.lib.comm.JsonRpcEndpoint;
+import de.esoco.lib.comm.JsonRpcEndpoint.JsonRpcMethod;
 import de.esoco.lib.json.Json;
-import de.esoco.lib.json.JsonObject;
 
 import java.lang.reflect.Method;
-import java.net.URL;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import de.hsflensburg.java.gwt.shared.Command;
+import de.hsflensburg.java.gwt.shared.JsonRpcCommand;
 import de.hsflensburg.java.gwt.shared.ServiceException;
 import de.hsflensburg.java.gwt.shared.WebAppService;
 
@@ -45,10 +44,10 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 	 * {@inheritDoc}
 	 */
 	@Override
-	public String executeCommand(String sCommand, String sData) throws Exception
+	public String executeCommand(Command rCommand) throws Exception
 	{
-		String sMethod = "handle" + sCommand;
-		Method rHandler = getClass().getMethod(sMethod, String.class);
+		String sMethod = "handle" + rCommand;
+		Method rHandler = getClass().getMethod(sMethod, rCommand.getClass());
 
 		if (rHandler == null)
 		{
@@ -56,29 +55,27 @@ public class WebAppServiceImpl extends RemoteServiceServlet
 				"Missing command handling method " + sMethod);
 		}
 
-		Object aResult = rHandler.invoke(this, sData);
+		Object aResult = rHandler.invoke(this, rCommand);
 
 		return aResult != null ? aResult.toString() : null;
 	}
 
 	/***************************************
-	 * Handles the command
-	 * {@link WebAppService#COMMAND_GET_LATEST_BLOCK_NUMBER}.
+	 * Handles {@link JsonRpcCommand} execution.
 	 */
-	public String handleGetLatestBlockNumber(String sIgnored)
+	public String handleJsonRpcCommand(JsonRpcCommand rCommand)
 	{
-		URL aUrl;
 		try
 		{
 			Endpoint aNode = Endpoint.at("json-rpc:https://mainnet.infura.io/");
 
-			EndpointFunction<?,
-				JsonObject> fGetBlockNumber = JsonRpcEndpoint.call(
-					"eth_blockNumber", JsonObject.class).on(aNode);
+			JsonRpcMethod<String,
+				Object> fRpcCall = new JsonRpcMethod<>(rCommand.getMethod(),
+					rCommand.getData(), sJson -> Json.parse(sJson));
 
-			JsonObject aJsonResponse = fGetBlockNumber.receive();
+			Object rResponse = fRpcCall.on(aNode).receive();
 
-			return Json.toJson(aJsonResponse.get("result"));
+			return Json.toJson(rResponse);
 		}
 		catch (Exception e)
 		{

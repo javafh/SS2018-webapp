@@ -12,6 +12,8 @@ repositories {
 
 dependencies {
 	compile 'de.esoco:esoco-lib:1.2.+'
+	compile 'com.github.gwtmaterialdesign:gwt-material:2.0.1'
+	compile 'com.github.gwtmaterialdesign:gwt-material-themes:2.0.1'
 }
 
 putnami {

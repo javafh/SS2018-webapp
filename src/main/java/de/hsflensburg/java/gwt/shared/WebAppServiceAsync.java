@@ -8,6 +8,5 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 public interface WebAppServiceAsync
 {
 
-	void executeCommand(String sCommand, String sData,
-		AsyncCallback<String> callback);
+	void executeCommand(Command rCommand, AsyncCallback<String> callback);
 }
